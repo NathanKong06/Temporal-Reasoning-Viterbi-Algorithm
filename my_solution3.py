@@ -51,6 +51,15 @@ def read_observation_actions():
             data.append(line)
     return data
 
+def write_output(output):
+    with open("states.txt","w") as f:
+        f.write("states\n")
+        f.write(str(len(output)) + "\n")
+        for index,_ in enumerate(output):
+            f.write("\"" + output[index] + "\"")
+            if index != len(output) -1:
+                f.write("\n")
+
 def main():
     a = 1
 
