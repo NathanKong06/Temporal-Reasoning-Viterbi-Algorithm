@@ -60,8 +60,48 @@ def write_output(output):
             if index != len(output) -1:
                 f.write("\n")
 
+def calculate_state_probabilities():
+    state_weights,_ = read_state_weights()
+    state_probabilities = {}
+    total_weight = 0
+    for state_and_weight in state_weights:
+        line = state_and_weight.split()
+        state = line[0].strip('"') #Remove quotation marks
+        weight = int(line[1])
+        total_weight = total_weight + weight #Track total weight
+        state_probabilities[state] = weight
+
+    for state,weight in state_probabilities.items():
+        state_probabilities[state] = weight/total_weight #Calculate probability 
+
+    return state_probabilities
+
+def calculate_state_observation_probabilities(): #Need to account for missing data later
+    state_observation_weights,unique_states,unique_observations,default_value = read_state_observation_weights()
+    state_observation_probabilities = {}
+
+    for state_and_observation_weight in state_observation_weights:
+        state,observation,weight = state_and_observation_weight.split()
+        state = state.strip('"') #Remove quotation marks
+        observation = observation.strip('"') #Remove quotation marks
+        if state not in state_observation_probabilities:
+            state_observation_probabilities[state] = {} #Create dictionary for every state
+        state_observation_probabilities[state][observation] = int(weight) #Set observation's weights
+
+    for state_observation_probability in state_observation_probabilities:
+        totals = sum(state_observation_probabilities[state_observation_probability].values()) #Total weights for specific state
+        for observation in state_observation_probabilities[state_observation_probability]:
+            state_observation_probabilities[state_observation_probability][observation] = state_observation_probabilities[state_observation_probability][observation]/totals #Calculate probability 
+    return state_observation_probabilities
+
+# def calculate_transition_probabilities():
+#     b = 1
+
 def main():
-    a = 1
+    state_probabilities = calculate_state_probabilities()
+    state_observation_probabilities = calculate_state_observation_probabilities()
+    print(state_probabilities)
+    print(state_observation_probabilities)
 
 if __name__ == "__main__":
     main()
