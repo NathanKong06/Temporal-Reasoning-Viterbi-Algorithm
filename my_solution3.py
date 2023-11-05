@@ -94,14 +94,36 @@ def calculate_state_observation_probabilities(): #Need to account for missing da
             state_observation_probabilities[state_observation_probability][observation] = state_observation_probabilities[state_observation_probability][observation]/totals #Calculate probability 
     return state_observation_probabilities
 
-# def calculate_transition_probabilities():
-#     b = 1
+def calculate_transition_probabilities(): #Need to account for missing data later
+    state_transition_weights,unique_states,unique_actions,default_value = read_state_action_state_weights()
+    temp_probabilities = {}
+    transition_probabilities = {}
+
+    for state_and_transition in state_transition_weights:
+        curr_state,transition,next_state,weight = state_and_transition.split()
+        curr_state = curr_state.strip('"') #Remove quotation marks
+        transition = transition.strip('"')
+        next_state = next_state.strip('"')
+        given = (curr_state,transition) #Used as a key for the dictionary
+        if given not in temp_probabilities:
+            temp_probabilities[given] = {}
+        temp_probabilities[given][next_state] = int(weight)
+
+    for given,next_state in temp_probabilities.items():
+        totals = sum(next_state.values())
+        transition_probabilities[given] = {nexts: weight / totals for nexts, weight in next_state.items()} #Calculate probabilities
+
+    return transition_probabilities
 
 def main():
     state_probabilities = calculate_state_probabilities()
     state_observation_probabilities = calculate_state_observation_probabilities()
-    print(state_probabilities)
-    print(state_observation_probabilities)
+    state_transition_probabilities = calculate_transition_probabilities()
+    all_states = [state for state in state_probabilities]
+    print("All States", all_states)
+    print("State Probabilities", state_probabilities)
+    print("State Observation Probabilities", state_observation_probabilities)
+    print("State Transition Probabiltiies", state_transition_probabilities)
 
 if __name__ == "__main__":
     main()
