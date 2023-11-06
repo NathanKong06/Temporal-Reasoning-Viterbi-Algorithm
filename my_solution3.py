@@ -5,7 +5,8 @@ def read_state_weights():
     with open("state_weights.txt","r") as f:
         _ = f.readline() #Ignore first line
         state_and_weights = f.readline() 
-        num_states,_ = state_and_weights.split()
+        state_and_weights = state_and_weights.split()
+        num_states = state_and_weights[0]
         for _ in range(int(num_states)):
             line = f.readline().strip() #Remove new line symbols
             data.append(line)
