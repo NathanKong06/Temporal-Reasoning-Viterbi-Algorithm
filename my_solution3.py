@@ -1,3 +1,5 @@
+answer = []
+
 def read_state_weights():
     data = []
     with open("state_weights.txt","r") as f:
@@ -115,15 +117,51 @@ def calculate_transition_probabilities(): #Need to account for missing data late
 
     return transition_probabilities
 
+def calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states):
+    start_state = "" 
+    start_observation = observation_actions[0]
+    best_value = -100000
+    for state in all_states:
+        value = state_probabilities[state] * state_observation_probabilities[state][start_observation]
+        if value > best_value:
+            start_state = state
+            best_value = value
+        
+    answer.append(start_state)
+    return start_state,best_value
+
+def calculate_hidden_states(curr_state,curr_value,curr_index,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states):
+    if curr_index == len(observation_actions):
+        return 0
+    next_state = ""
+    action_observation = observation_actions[curr_index]
+    action,observation = action_observation.split()
+    best_value = -100000
+    for state in all_states:
+        value = curr_value * state_observation_probabilities[state][observation] * state_transition_probabilities[curr_state,action][state]
+        if value > best_value:
+            best_value = value
+            next_state = state
+    answer.append(next_state)
+    calculate_hidden_states(next_state,best_value,curr_index+1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states)
+
+def change_format_observation_action():
+    observation_actions = read_observation_actions() #Looks like ['"Apple" "Turnaround"', '"Apple" "Forward"', '"Volcano"']
+    observation_actions = [' '.join(observation_actions)] #Looks like ['"Apple" "Turnaround" "Apple" "Forward" "Volcano"']
+    observation_actions = observation_actions[0].split() #Split each word into their own elements
+    observation_actions = [observation_actions[0]] + [observation_actions[i] + " " + observation_actions[i+1] for i in range(1, len(observation_actions), 2)] #Looks like ['"Apple"', '"Turnaround" "Apple"', "Forward" "Volcano"']
+    observation_actions = [action.replace('"', '') for action in observation_actions] #Remove quotation marks
+    return observation_actions
+
 def main():
     state_probabilities = calculate_state_probabilities()
     state_observation_probabilities = calculate_state_observation_probabilities()
     state_transition_probabilities = calculate_transition_probabilities()
     all_states = [state for state in state_probabilities]
-    print("All States", all_states)
-    print("State Probabilities", state_probabilities)
-    print("State Observation Probabilities", state_observation_probabilities)
-    print("State Transition Probabiltiies", state_transition_probabilities)
+    observation_actions = change_format_observation_action()
+    start_state,start_state_value = calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states)
+    calculate_hidden_states(start_state,start_state_value,1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states)
+    write_output(answer)
 
 if __name__ == "__main__":
     main()
