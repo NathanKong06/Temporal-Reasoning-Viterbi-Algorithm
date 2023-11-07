@@ -112,7 +112,7 @@ def calculate_missing_transitions(state_transition_weights,unique_states,unique_
             return 0
     return unique_actions - counter #Calculate how many missing elements for that state and action there are
 
-def calculate_transition_probabilities(): #Need to account for missing data later
+def calculate_transition_probabilities():
     state_transition_weights,unique_states,unique_actions,default_value = read_state_action_state_weights()
     default_value = int(default_value)
     temp_probabilities = {}
