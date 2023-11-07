@@ -76,6 +76,8 @@ def calculate_missing_state_observations(state_observation_weights,unique_observ
         state,_,_ = element.split()
         if state.strip('"') == state_check: #Count how many times it appears
             counter = counter + 1
+        if counter == unique_observations:
+            return 0
     return unique_observations - counter #Calculate how many missing elements for that state there are
 
 def calculate_state_observation_probabilities():
@@ -98,10 +100,24 @@ def calculate_state_observation_probabilities():
             state_observation_probabilities[state_observation_probability][observation] = state_observation_probabilities[state_observation_probability][observation]/totals #Calculate probability 
     return state_observation_probabilities,default_value,state_and_totals,unique_observations
 
+def calculate_missing_transitions(state_transition_weights,unique_states,unique_actions,given):
+    unique_states = int(unique_states)
+    unique_actions = int(unique_actions)
+    counter = 0
+    for element in state_transition_weights: #For every state and action that is present in state_action_state_weights.txt
+        curr_state,action,_,_ = element.split()
+        if curr_state.strip('"') == given[0] and action.strip('"') == given[1]: #Count how many times it appears
+            counter = counter + 1
+        if counter == unique_actions:
+            return 0
+    return unique_actions - counter #Calculate how many missing elements for that state and action there are
+
 def calculate_transition_probabilities(): #Need to account for missing data later
     state_transition_weights,unique_states,unique_actions,default_value = read_state_action_state_weights()
+    default_value = int(default_value)
     temp_probabilities = {}
     transition_probabilities = {}
+    state_action_totals = {}
 
     for state_and_transition in state_transition_weights:
         curr_state,transition,next_state,weight = state_and_transition.split()
@@ -114,10 +130,11 @@ def calculate_transition_probabilities(): #Need to account for missing data late
         temp_probabilities[given][next_state] = int(weight)
 
     for given,next_state in temp_probabilities.items():
-        totals = sum(next_state.values())
+        totals = sum(next_state.values()) + (calculate_missing_transitions(state_transition_weights,unique_states,unique_actions,given) * default_value)
+        state_action_totals[given] = totals
         transition_probabilities[given] = {nexts: weight / totals for nexts, weight in next_state.items()} #Calculate probabilities
 
-    return transition_probabilities
+    return transition_probabilities,default_value,state_action_totals,unique_states
 
 def calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations):
     start_state = "" 
@@ -125,12 +142,14 @@ def calculate_start_position(state_probabilities,state_observation_probabilities
     state_observation_default = int(state_observation_default)
     best_value = -100000
     for state in all_states: #Calculate Start -> Every State
+
         if state not in state_observation_probabilities: #If a state is not in the state_observation_weights.txt file
             state_observation_probabilities[state] = {}
         if state not in state_and_totals: #If a state is not in the state_observation_weights.txt file calcluate its total (All observations are default weights)
             state_and_totals[state] = int(unique_observations) * state_observation_default
         if start_observation not in state_observation_probabilities[state]: #If observation not in state_observation_weights.txt for that state, calculate probability
             state_observation_probabilities[state][start_observation] = state_observation_default/state_and_totals[state]
+
         value = state_probabilities[state] * state_observation_probabilities[state][start_observation] #P(State)*P(Observation|State)
         if value > best_value: #Track best state
             start_state = state
@@ -139,7 +158,7 @@ def calculate_start_position(state_probabilities,state_observation_probabilities
     answer.append(start_state)
     return start_state,best_value
 
-def calculate_hidden_states(curr_state,curr_value,curr_index,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals):
+def calculate_hidden_states(curr_state,curr_value,curr_index,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states):
     if curr_index == len(observation_actions): #Done iterating through observations and actions
         return 0
     next_state = ""
@@ -147,16 +166,27 @@ def calculate_hidden_states(curr_state,curr_value,curr_index,state_observation_p
     action,observation = action_observation.split()
     best_value = -100000
     for state in all_states: #Calculate Current State -> Every other state
+
         if state not in state_observation_probabilities:
             state_observation_default[state] = {}
+        if state not in state_and_totals: #If a state is not in the state_observation_weights.txt file calcluate its total (All observations are default weights)
+            state_and_totals[state] = int(unique_observations) * state_observation_default
         if observation not in state_observation_probabilities[state]:
             state_observation_probabilities[state][observation] = int(state_observation_default)/state_and_totals[state]
+
+        if (curr_state,action) not in state_transition_probabilities:
+            state_transition_probabilities[curr_state,action] = {}
+        if (curr_state,action) not in state_action_totals:
+            state_action_totals[curr_state,action] = int(unique_states)
+        if state not in state_transition_probabilities[curr_state,action]:
+            state_transition_probabilities[curr_state,action][state] = int(state_action_default)/state_action_totals[curr_state,action]
+
         value = curr_value * state_observation_probabilities[state][observation] * state_transition_probabilities[curr_state,action][state] #Previous Value * P(Observation | State) * P(Next State | State, Action)
         if value > best_value: #Track best state
             best_value = value
             next_state = state
     answer.append(next_state)
-    calculate_hidden_states(next_state,best_value,curr_index+1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals) #Recursively calculate every step
+    calculate_hidden_states(next_state,best_value,curr_index+1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states) #Recursively calculate every step
 
 def change_format_observation_action():
     observation_actions = read_observation_actions() #Looks like ['"Apple" "Turnaround"', '"Apple" "Forward"', '"Volcano"']
@@ -169,11 +199,11 @@ def change_format_observation_action():
 def main():
     state_probabilities = calculate_state_probabilities()
     state_observation_probabilities,state_observation_default,state_and_totals,unique_observations = calculate_state_observation_probabilities()
-    state_transition_probabilities = calculate_transition_probabilities()
+    state_transition_probabilities,state_action_default,state_action_totals,unique_states = calculate_transition_probabilities()
     all_states = [state for state in state_probabilities]
     observation_actions = change_format_observation_action()
     start_state,start_state_value = calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations)
-    calculate_hidden_states(start_state,start_state_value,1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals)
+    calculate_hidden_states(start_state,start_state_value,1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states)
     write_output(answer)
 
 if __name__ == "__main__":
