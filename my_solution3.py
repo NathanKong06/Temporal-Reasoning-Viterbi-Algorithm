@@ -164,6 +164,7 @@ def calculate_hidden_states(curr_state,curr_value,curr_index,state_observation_p
     next_state = ""
     action_observation = observation_actions[curr_index]
     action,observation = action_observation.split()
+    state_action_default = int(state_action_default)
     best_value = -100000
     for state in all_states: #Calculate Current State -> Every other state
 
@@ -177,9 +178,9 @@ def calculate_hidden_states(curr_state,curr_value,curr_index,state_observation_p
         if (curr_state,action) not in state_transition_probabilities:
             state_transition_probabilities[curr_state,action] = {}
         if (curr_state,action) not in state_action_totals:
-            state_action_totals[curr_state,action] = int(unique_states)
+            state_action_totals[curr_state,action] = int(unique_states) * state_action_default
         if state not in state_transition_probabilities[curr_state,action]:
-            state_transition_probabilities[curr_state,action][state] = int(state_action_default)/state_action_totals[curr_state,action]
+            state_transition_probabilities[curr_state,action][state] = state_action_default/state_action_totals[curr_state,action]
 
         value = curr_value * state_observation_probabilities[state][observation] * state_transition_probabilities[curr_state,action][state] #Previous Value * P(Observation | State) * P(Next State | State, Action)
         if value > best_value: #Track best state
