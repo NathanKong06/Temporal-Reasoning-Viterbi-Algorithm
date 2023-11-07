@@ -72,11 +72,11 @@ def calculate_state_probabilities():
 def calculate_missing_state_observations(state_observation_weights,unique_observations,state_check):
     unique_observations = int(unique_observations)
     counter = 0
-    for element in state_observation_weights:
+    for element in state_observation_weights: #For every state that is present in state_observation_weights.txt
         state,_,_ = element.split()
-        if state.strip('"') == state_check:
+        if state.strip('"') == state_check: #Count how many times it appears
             counter = counter + 1
-    return unique_observations - counter
+    return unique_observations - counter #Calculate how many missing elements for that state there are
 
 def calculate_state_observation_probabilities():
     state_observation_weights,_,unique_observations,default_value = read_state_observation_weights()
@@ -93,7 +93,7 @@ def calculate_state_observation_probabilities():
 
     for state_observation_probability in state_observation_probabilities:
         totals = sum(state_observation_probabilities[state_observation_probability].values()) + (calculate_missing_state_observations(state_observation_weights,unique_observations,state_observation_probability) * int(default_value)) #Total weights for specific state
-        state_and_totals[state_observation_probability] = totals
+        state_and_totals[state_observation_probability] = totals #Keep track of total weights for states
         for observation in state_observation_probabilities[state_observation_probability]:
             state_observation_probabilities[state_observation_probability][observation] = state_observation_probabilities[state_observation_probability][observation]/totals #Calculate probability 
     return state_observation_probabilities,default_value,state_and_totals,unique_observations
@@ -125,11 +125,11 @@ def calculate_start_position(state_probabilities,state_observation_probabilities
     state_observation_default = int(state_observation_default)
     best_value = -100000
     for state in all_states: #Calculate Start -> Every State
-        if state not in state_observation_probabilities:
+        if state not in state_observation_probabilities: #If a state is not in the state_observation_weights.txt file
             state_observation_probabilities[state] = {}
-        if state not in state_and_totals:
+        if state not in state_and_totals: #If a state is not in the state_observation_weights.txt file calcluate its total (All observations are default weights)
             state_and_totals[state] = int(unique_observations) * state_observation_default
-        if start_observation not in state_observation_probabilities[state]:
+        if start_observation not in state_observation_probabilities[state]: #If observation not in state_observation_weights.txt for that state, calculate probability
             state_observation_probabilities[state][start_observation] = state_observation_default/state_and_totals[state]
         value = state_probabilities[state] * state_observation_probabilities[state][start_observation] #P(State)*P(Observation|State)
         if value > best_value: #Track best state
