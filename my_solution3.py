@@ -69,14 +69,14 @@ def calculate_state_probabilities():
 
     return state_probabilities
 
-def calculate_missing_state_observations(state_observation_weights,unique_observations,state_check):
+def calculate_missing_state_observations(state_observation_weights,unique_observations,state_check): #Calculate how many lines are missing for a specific state for state observations
     unique_observations = int(unique_observations)
     counter = 0
     for element in state_observation_weights: #For every state that is present in state_observation_weights.txt
         state,_,_ = element.split()
         if state.strip('"') == state_check: #Count how many times it appears
             counter = counter + 1
-        if counter == unique_observations:
+        if counter == unique_observations: #Exit if all state observations are found already
             return 0
     return unique_observations - counter #Calculate how many missing elements for that state there are
 
@@ -106,9 +106,9 @@ def calculate_missing_transitions(state_transition_weights,unique_states,unique_
     counter = 0
     for element in state_transition_weights: #For every state and action that is present in state_action_state_weights.txt
         curr_state,action,_,_ = element.split()
-        if curr_state.strip('"') == given[0] and action.strip('"') == given[1]: #Count how many times it appears
+        if curr_state.strip('"') == given[0] and action.strip('"') == given[1]: #Count how many times it state and action appears
             counter = counter + 1
-        if counter == unique_actions:
+        if counter == unique_actions: #Exit if all state and actions are found already
             return 0
     return unique_actions - counter #Calculate how many missing elements for that state and action there are
 
