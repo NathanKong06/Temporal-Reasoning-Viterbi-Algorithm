@@ -220,8 +220,9 @@ def calculate_hidden_states(start_state_values,curr_index,state_observation_prob
             value = start_state_values[curr_state] * state_observation_probabilities[next_state][observation] * state_transition_probabilities[curr_state,action][next_state] #Previous Value * P(Observation | State) * P(Next State | State, Action)
             if value > best_transition_value:
                 best_transition_value = value
-                best_transition = next_state
-        state_transition_list.append(((curr_state,best_transition),best_transition_value))
+                best_transition = (curr_state,next_state)
+
+        state_transition_list.append((best_transition,best_transition_value)) 
     time_transition_list.append(state_transition_list)
     for state_transition in state_transition_list:
         start_state_values[state_transition[0][1]] = state_transition[1]
