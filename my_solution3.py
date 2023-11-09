@@ -155,37 +155,6 @@ def calculate_start_position(state_probabilities,state_observation_probabilities
 
     return start_state_values
 
-def calculate_state_to_every_other_state(curr_state,curr_value,curr_index,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states):
-    if curr_index == len(observation_actions): #Done iterating through observations and actions
-        return 0
-    next_state = ""
-    action_observation = observation_actions[curr_index]
-    action,observation = action_observation.split()
-    state_action_default = int(state_action_default)
-    best_value = -100000
-    for state in all_states: #Calculate Current State -> Every other state
-
-        if state not in state_observation_probabilities:
-            state_observation_probabilities[state] = {}
-        if state not in state_and_totals: #If a state is not in the state_observation_weights.txt file calcluate its total (All observations are default weights)
-            state_and_totals[state] = int(unique_observations) * state_observation_default
-        if observation not in state_observation_probabilities[state]:
-            state_observation_probabilities[state][observation] = int(state_observation_default)/state_and_totals[state]
-
-        if (curr_state,action) not in state_transition_probabilities:
-            state_transition_probabilities[curr_state,action] = {}
-        if (curr_state,action) not in state_action_totals:
-            state_action_totals[curr_state,action] = int(unique_states) * state_action_default
-        if state not in state_transition_probabilities[curr_state,action]:
-            state_transition_probabilities[curr_state,action][state] = state_action_default/state_action_totals[curr_state,action]
-
-        value = curr_value * state_observation_probabilities[state][observation] * state_transition_probabilities[curr_state,action][state] #Previous Value * P(Observation | State) * P(Next State | State, Action)
-        if value > best_value: #Track best state
-            best_value = value
-            next_state = state
-    answer.append(next_state)
-    calculate_state_to_every_other_state(next_state,best_value,curr_index+1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states) #Recursively calculate every step
-
 def calculate_hidden_states(start_state_values,curr_index,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states):
     if curr_index == len(observation_actions): 
         return
