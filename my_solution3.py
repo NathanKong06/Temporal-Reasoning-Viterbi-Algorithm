@@ -179,17 +179,17 @@ def calculate_hidden_states(start_state_values,curr_index,state_observation_prob
             if (curr_state,action) not in state_action_totals:
                 state_action_totals[curr_state,action] = int(unique_states) * state_action_default
             if next_state not in state_transition_probabilities[curr_state,action]:
-                state_transition_probabilities[curr_state,action][next_state] = state_action_default/state_action_totals[curr_state,action]
+                state_transition_probabilities[curr_state,action][next_state] = state_action_default/state_action_totals[curr_state,action] #Default probability
 
             value = start_state_values[curr_state] * state_observation_probabilities[next_state][observation] * state_transition_probabilities[curr_state,action][next_state] #Previous Value * P(Observation | State) * P(Next State | State, Action)
-            if value > best_transition_value:
+            if value > best_transition_value: #Track Best Transition at this level and value
                 best_transition_value = value
                 best_transition = (curr_state,next_state)
 
-        state_transition_list.append((best_transition,best_transition_value)) 
+        state_transition_list.append((best_transition,best_transition_value))  #At this time, track best transitions (len(state_transition) == unique_states)
     time_transition_list.append(state_transition_list)
     for state_transition in state_transition_list:
-        start_state_values[state_transition[0][1]] = state_transition[1]
+        start_state_values[state_transition[0][1]] = state_transition[1] #Update the start_state_values to the max values at this time
     calculate_hidden_states(start_state_values,curr_index+1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states)
     
 def change_format_observation_action():
@@ -204,21 +204,21 @@ def backtrack_for_path():
     answer = []
     max_value = -10000
     last_two_states = ""
-    for transition_data in time_transition_list[-1]:
+    for transition_data in time_transition_list[-1]: #Information at the last time
         two_states,value = transition_data
-        if value > max_value:
+        if value > max_value: #Find the max value from the last time
             max_value = value
             last_two_states = two_states
     second_last_state,last_state = last_two_states
     prev_state = second_last_state
-    answer.append(last_state)
+    answer.append(last_state) #Last 2 states in the answer
     answer.append(second_last_state)
-    for data in reversed(time_transition_list[:-1]):
+    for data in reversed(time_transition_list[:-1]): #Backtrack
         for transitions in data:
             if transitions[0][1] == prev_state:
                 prev_state = transitions[0][0]
                 answer.append(prev_state)
-                break          
+                break #Break when you find your answer and continue backtracking
     return answer
 
 def main():
@@ -229,9 +229,9 @@ def main():
     observation_actions = change_format_observation_action()
     start_state_values = calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations)
     calculate_hidden_states(start_state_values,1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states)
-    rest_of_answer = backtrack_for_path()
-    rest_of_answer.reverse()
-    write_output(rest_of_answer)
+    answer = backtrack_for_path()
+    answer.reverse() #Reverse the answer due to backtracking
+    write_output(answer)
     
 if __name__ == "__main__":
     main()
