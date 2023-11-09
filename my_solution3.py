@@ -138,11 +138,9 @@ def calculate_transition_probabilities():
     return transition_probabilities,default_value,state_action_totals,unique_states
 
 def calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations):
-    start_state = "" 
     start_observation = observation_actions[0]
     state_observation_default = int(state_observation_default)
     start_state_values = {}
-    best_value = -10000
     for state in all_states: #Calculate Start -> Every State
 
         if state not in state_observation_probabilities: #If a state is not in the state_observation_weights.txt file
@@ -154,11 +152,8 @@ def calculate_start_position(state_probabilities,state_observation_probabilities
 
         value = state_probabilities[state] * state_observation_probabilities[state][start_observation] #P(State)*P(Observation|State)
         start_state_values[state] = value
-        if value > best_value:
-            best_value = value
-            start_state = state
 
-    return start_state,start_state_values
+    return start_state_values
 
 def calculate_state_to_every_other_state(curr_state,curr_value,curr_index,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states):
     if curr_index == len(observation_actions): #Done iterating through observations and actions
@@ -248,6 +243,7 @@ def backtrack_for_path():
     second_last_state,last_state = last_two_states
     prev_state = second_last_state
     answer.append(last_state)
+    answer.append(second_last_state)
     for data in reversed(time_transition_list[:-1]):
         for transitions in data:
             if transitions[0][1] == prev_state:
@@ -262,11 +258,11 @@ def main():
     state_transition_probabilities,state_action_default,state_action_totals,unique_states = calculate_transition_probabilities()
     all_states = [state for state in state_probabilities]
     observation_actions = change_format_observation_action()
-    start_state,start_state_values = calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations)
+    start_state_values = calculate_start_position(state_probabilities,state_observation_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations)
     calculate_hidden_states(start_state_values,1,state_observation_probabilities,state_transition_probabilities,observation_actions,all_states,state_observation_default,state_and_totals,unique_observations,state_action_default,state_action_totals,unique_states)
     rest_of_answer = backtrack_for_path()
     rest_of_answer.reverse()
-    write_output([start_state] + rest_of_answer)
+    write_output(rest_of_answer)
     
 if __name__ == "__main__":
     main()
