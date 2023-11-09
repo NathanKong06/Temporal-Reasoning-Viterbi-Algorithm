@@ -252,7 +252,8 @@ def backtrack_for_path():
         for transitions in data:
             if transitions[0][1] == prev_state:
                 prev_state = transitions[0][0]
-                answer.append(prev_state)            
+                answer.append(prev_state)
+                break          
     return answer
 
 def main():
